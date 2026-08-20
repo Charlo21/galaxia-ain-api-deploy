@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: galaxia-postgres
+    environment:
+      POSTGRES_DB: galaxia
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: galaxia-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: galaxia-api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: galaxia
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      PORT: 3000
+      NODE_ENV: production
+      # Galaxia Audit & Issuance Configuration
+      GALAXIA_AUDIT_URL: ${GALAXIA_AUDIT_URL:-https://audit.galaxia.io}
+      GALAXIA_ISSUANCE_URL: ${GALAXIA_ISSUANCE_URL:-https://issuance.galaxia.io}
+      QUANTUM_CRYPTO_ENABLED: ${QUANTUM_CRYPTO_ENABLED:-true}
+      SEC_EDGAR_API_KEY: ${SEC_EDGAR_API_KEY:-}
+      AUDIT_REQUIRED: ${AUDIT_REQUIRED:-true}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs
+      - ./temp:/app/temp
+    networks:
+      - galaxia-network
+
+  # Kafka for event bus (optional, for production event-driven architecture)
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: galaxia-kafka
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    networks:
+      - galaxia-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: galaxia-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - galaxia-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  galaxia-network:
+    driver: bridge
+

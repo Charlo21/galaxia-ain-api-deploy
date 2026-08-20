@@ -1,0 +1,8 @@
+# Testnet activity / job file store (local api-server persistence)
+data/
+logs/
+*.log
+.env
+.env.local
+node_modules/
+dist/

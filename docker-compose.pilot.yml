@@ -1,0 +1,48 @@
+# SMB Pilot stack — local/production-like verification
+# Usage: docker compose -f docker-compose.pilot.yml up --build
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: galaxia
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pilot_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d galaxia"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DB_SSL: "false"
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: galaxia
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      TENANT_MIGRATION_APPLIED: "true"
+      ALLOW_DEV_AUTH: "true"
+      INTERNAL_BOOTSTRAP_KEY: "pilot-bootstrap-local-only"
+      DOCKER_INFERENCE_ENABLED: "false"
+      ALLOW_MAINNET: "false"
+      ALLOWED_ORIGINS: "http://localhost:5173,https://galaxia-ai-testnet.vercel.app"
+      # Set at runtime for live OpenAI: OPENAI_API_KEY
+      # Set at runtime for distributed RL: UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["sh", "scripts/docker-entrypoint.sh"]
+
+volumes:
+  pilot_pg:
