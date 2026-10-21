@@ -204,5 +204,5 @@ npm run lint
 
 ## License
 
-MIT
+Proprietary. Copyright (c) 2025-2026 Charles Mouton. All rights reserved. See [LICENSE](LICENSE).
 
