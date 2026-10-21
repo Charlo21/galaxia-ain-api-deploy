@@ -1,5 +1,7 @@
 {
   "name": "@galaxia/api-server",
+  "private": true,
+  "license": "UNLICENSED",
   "version": "1.0.0",
   "description": "Galaxia AI Network API Server",
   "main": "dist/index.js",
