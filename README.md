@@ -1,16 +1,17 @@
 # Galaxia AI Network API Server
 
-Production-ready API server for the decentralized AI inference network.
+API server source for the Galaxia AI network **testnet preview**. It is not deployed anywhere today and
+no AI models, GPUs or payments run in production.
 
-## Features
+## Features (code in this repo; not running in production)
 
-- ✅ Node registration and health monitoring
-- ✅ Smart task distribution with redundancy
-- ✅ AI inference API (Llama 3, Stable Diffusion, Whisper)
-- ✅ Result verification with consensus mechanism
-- ✅ Token payment system
-- ✅ Security: JWT auth, rate limiting, Docker sandboxing
-- ✅ Admin dashboard endpoints
+- Node registration and health monitoring
+- Task distribution with redundancy
+- Inference API adapters (require your own model providers / workers)
+- Result verification (consensus check across nodes)
+- Token payment concept (not wired to any live payment rail)
+- Security: JWT auth, rate limiting, Docker sandboxing
+- Admin dashboard endpoints
 
 ## Quick Start
 
